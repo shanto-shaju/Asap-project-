@@ -24,17 +24,8 @@ app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///database.db'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 # db.init_app(app)  # only if you use models/SQLAlchemy elsewhere; keep commented if causing issues
 
-# ---------------- helper ----------------
-def ensure_phone_column():
-    """Create phone_number column in wi_fi_network if it doesn't exist."""
-    conn = sqlite3.connect(DB_PATH)
-    cur = conn.cursor()
-    cur.execute("PRAGMA table_info(wi_fi_network);")
-    cols = [row[1] for row in cur.fetchall()]
-    if "phone_number" not in cols:
-        cur.execute("ALTER TABLE wi_fi_network ADD COLUMN phone_number TEXT;")
-        conn.commit()
-    conn.close()
+# ---------------- helper ---------------defef ensure_phone_column():
+
 
 # ---------------- wifi helper ----------------
 import subprocess
@@ -187,38 +178,7 @@ def get_latency():
 # ---------------- password changer route (handles GET and POST) ----------------
 @app.route("/password_changer", methods=["GET", "POST"])
 def password_changer():
-    # ensure phone_number column exists
-    ensure_phone_column()
 
-    conn = sqlite3.connect(DB_PATH)
-    cursor = conn.cursor()
-
-    message = None
-    success = False
-
-    if request.method == "POST":
-        # accept either name 'phone' or 'phone_number' from the form
-        phone = request.form.get('phone') or request.form.get('phone_number')
-        if phone:
-            # if table has rows -> update all rows; else insert a new row with defaults
-            cursor.execute("SELECT COUNT(*) FROM wi_fi_network;")
-            count = cursor.fetchone()[0]
-            if count and count > 0:
-                cursor.execute("UPDATE wi_fi_network SET phone_number = ?;", (phone,))
-            else:
-                # insert minimal row (adjust columns if your table different)
-                cursor.execute("INSERT INTO wi_fi_network (ssid, brand, interval, phone_number) VALUES (?, ?, ?, ?);",
-                               ("", "", 0, phone))
-            conn.commit()
-            message = "Number registered!"
-            success = True
-        else:
-            message = "Please enter a valid phone number."
-
-    # fetch current network data to show in page
-    cursor.execute("SELECT ssid, brand, interval FROM wi_fi_network LIMIT 1;")
-    data = cursor.fetchone()
-    conn.close()
 
     return render_template("password_changer.html", data=data, success=success, message=message)
 
