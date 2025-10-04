@@ -1,7 +1,5 @@
 # app.py (updated)
 from flask import Flask, render_template, request, redirect, url_for, flash, jsonify
-from apscheduler.schedulers.background import BackgroundScheduler
-from twilio.rest import Client
 import atexit
 import platform
 import subprocess
