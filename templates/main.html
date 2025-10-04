@@ -1,0 +1,173 @@
+{% extends "base.html" %}
+
+{% block title %}Main Dashboard{% endblock %}
+
+{% block content %}
+<script src="{{ url_for('static', filename='reminder.js') }}"></script>
+<div class="container-fluid mt-4">
+  <!-- Header -->
+  <div class="row mb-4">
+    <div class="col text-center">
+      <h2 class="text-primary">Dashboard</h2>
+    </div>
+  </div>
+
+  <div class="row">
+    <!-- Left Sidebar -->
+    <div class="col-md-3 mb-4">
+      <div class="d-grid gap-3">
+        <button class="btn btn-outline-primary" onclick="showPrivacyPopup()">Password Changer</button>
+        <a href="{{ url_for('user_list') }}" class="btn btn-outline-secondary">User List Creation</a>
+      </div>
+    </div>
+
+    <!-- Right Side Content -->
+    <div class="col-md-9">
+      <!-- Data Usage -->
+      <div class="card mb-4 shadow-sm">
+        <div class="card-body">
+          <h5 class="card-title">📊 Data Usage</h5>
+          <p class="card-text">{{ total_used }}1.75GB USED</p>
+          <!-- Add bar or chart here later -->
+        </div>
+      </div>
+
+      <!-- Speed Test -->
+      <div class="card mb-4 shadow-sm">
+        <div class="card-body">
+          <h5 class="card-title">⚡ Speed Test</h5>
+          <p class="card-text" id="download">download: 0 Mbps</p>
+          <p class="card-text" id="upload">upload: 0 Mbps</p>
+          <button class="btn btn-primary mt-2" onclick="startSpeedTest()">Start test</button>
+        </div>
+      </div>
+
+     <!-- Network Graph - Real Time Latency -->
+<div class="card shadow-sm mb-4">
+  <div class="card-body">
+    <h5 class="card-title">📡 Real-Time Latency (ms)</h5>
+    <canvas id="latencyChart" height="75"></canvas>
+  </div>
+</div>
+    </div>
+  </div>
+</div>
+<script>
+  function animateValue(id, endValue, duration) {
+    const element = document.getElementById(id);
+    let start = 0;
+    const increment = endValue / (duration / 20);
+    const interval = setInterval(() => {
+      start += increment;
+      if (start >= endValue) {
+        start = endValue;
+        clearInterval(interval);
+      }
+      element.innerText = id.charAt(0).toUpperCase() + id.slice(1) + ": " + start.toFixed(2) + " Mbps";
+    }, 20);
+  }
+
+  function startSpeedTest() {
+    // Show animation first with dummy increasing values
+    document.getElementById("download").innerText = "Download: Testing...";
+    document.getElementById("upload").innerText = "Upload: Testing...";
+
+    // Fetch real data from Flask backend after short delay
+    fetch('/speedtest')
+      .then(response => response.json())
+      .then(data => {
+        animateValue("download", data.download, 2000);
+        setTimeout(() => {
+          animateValue("upload", data.upload, 2000);
+        }, 2200);
+      })
+      .catch(err => {
+        document.getElementById("download").innerText = "Download: Error";
+        document.getElementById("upload").innerText = "Upload: Error";
+      });
+  }
+</script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+  const ctx = document.getElementById('latencyChart').getContext('2d');
+
+  const latencyData = {
+    labels: [],
+    datasets: [{
+      label: 'Ping (ms)',
+      data: [],
+      borderColor: 'rgb(75, 192, 192)',
+      tension: 0.4
+    }]
+  };
+
+  const latencyChart = new Chart(ctx, {
+    type: 'line',
+    data: latencyData,
+    options: {
+      animation: false,
+      responsive: true,
+      scales: {
+        y: {
+          beginAtZero: true,
+          max: 200
+        }
+      }
+    }
+  });
+
+  function updateLatencyGraph() {
+    fetch('/get_latency')
+      .then(response => response.json())
+      .then(data => {
+        const now = new Date().toLocaleTimeString();
+        latencyChart.data.labels.push(now);
+        latencyChart.data.datasets[0].data.push(data.latency);
+
+        // Keep only last 20 points
+        if (latencyChart.data.labels.length > 20) {
+          latencyChart.data.labels.shift();
+          latencyChart.data.datasets[0].data.shift();
+        }
+
+        latencyChart.update();
+      });
+  }
+
+  // Call every 3 seconds
+  setInterval(updateLatencyGraph, 3000);
+</script>
+<script>
+  function showPrivacyPopup() {
+    const modal = new bootstrap.Modal(document.getElementById('privacyModal'));
+    modal.show();
+  }
+
+  function redirectToPasswordChanger() {
+    window.location.href = "{{ url_for('password_changer') }}";
+  }
+</script>
+
+<!-- Privacy Policy Modal -->
+<div class="modal fade" id="privacyModal" tabindex="-1" aria-labelledby="privacyModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="privacyModalLabel">Privacy Policy</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+        <p>
+          By enabling password changer, you allow the system to update your Wi-Fi password at defined intervals. Your data (SSID, brand, interval, and phone number) will be used to send alerts.
+        </p>
+        <p>Do you agree to proceed?</p>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+        <button class="btn btn-primary" onclick="redirectToPasswordChanger()">I Agree</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+{% endblock %}

@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>User List</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
+    <script>
+        function showUnauthorizedPopup() {
+            alert("⚠ Unauthorized Access Detected!");
+        }
+    </script>
+</head>
+<body>
+<script src="{{ url_for('static', filename='reminder.js') }}"></script>
+<div class="container mt-5">
+    <h2 class="mb-4">User List (Authorized SSIDs)</h2>
+
+    <form method="POST" class="mb-3">
+        <div class="input-group">
+            <input type="text" class="form-control" name="ssid" placeholder="Enter SSID to authorize" required>
+            <button class="btn btn-primary" type="submit">Add</button>
+        </div>
+    </form>
+
+    {% if message %}
+    <div class="alert alert-info">{{ message }}</div>
+    {% endif %}
+
+    <h5>Authorized SSIDs:</h5>
+    <ul class="list-group mb-4">
+        {% for ssid in authorized_users %}
+        <li class="list-group-item d-flex justify-content-between align-items-center">
+            {{ ssid }}
+            <form method="POST" action="/remove-ssid" class="d-inline">
+                <input type="hidden" name="ssid_to_remove" value="{{ ssid }}">
+                <button type="submit" class="btn btn-sm btn-danger">Remove</button>
+            </form>
+        </li>
+        {% endfor %}
+    </ul>
+
+    <h5>Currently Connected:</h5>
+    {% if current_ssid %}
+        <p><strong>{{ current_ssid }}</strong></p>
+    {% else %}
+        <p class="text-danger">No Wi-Fi detected.</p>
+    {% endif %}
+
+    {% if unauthorized %}
+    <script>
+        showUnauthorizedPopup();
+    </script>
+    {% endif %}
+
+    <a href="{{ url_for('main') }}" class="btn btn-secondary">Back to Dashboard</a>
+</div>
+</body>
+</html>

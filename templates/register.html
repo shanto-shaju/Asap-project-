@@ -1,0 +1,67 @@
+{% extends "base.html" %}
+
+{% block title %}Register Wi-Fi{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center mt-5">
+  <div class="col-md-6">
+    <div class="card shadow-sm">
+      <div class="card-body">
+        <h3 class="card-title text-center text-primary mb-4">Register Wi-Fi Network</h3>
+
+        <form method="post">
+          <div class="mb-3">
+            <label for="ssid" class="form-label">SSID (Wi-Fi Name)</label>
+            <input type="text" class="form-control" id="ssid" name="ssid" value="{{ ssid }}" required>
+          </div>
+
+          <div class="mb-3">
+            <label for="brand" class="form-label">Wi-Fi Router Brand</label>
+            <select class="form-select" id="brand" name="brand" required>
+              <option value="">-- Select Brand --</option>
+              <option value="TP-Link">TP-Link</option>
+              <option value="D-Link">D-Link</option>
+              <option value="Netgear">Netgear</option>
+              <option value="Tenda">Tenda</option>
+              <option value="Linksys">Linksys</option>
+              <option value="Huawei">Huawei</option>
+              <option value="Other">Other</option>
+            </select>
+          </div>
+
+          <div class="mb-3">
+            <label for="security" class="form-label">Security Type</label>
+            <select class="form-select" id="security" name="security" required>
+              <option value="">-- Select Security Type --</option>
+              <option value="WPA2">WPA2</option>
+              <option value="WPA3">WPA3</option>
+              <option value="WEP">WEP</option>
+              <option value="Open">Open (No Password)</option>
+            </select>
+          </div>
+
+          <div class="mb-3">
+            <label for="password" class="form-label">Wi-Fi Password</label>
+            <input type="password" class="form-control" id="password" name="password">
+          </div>
+
+          <div class="mb-3">
+            <label for="interval" class="form-label">Auto-Change Password Interval</label>
+            <select class="form-select" id="interval" name="interval">
+              <option value="">-- Select Interval --</option>
+              <option value="5 minutes">Every 5 minutes</option>
+              <option value="3 months">Every 3 Months(131400 min</option>
+              <option value="6 months">Every 6 Months(26800 min</option>
+              <option value="12 months">Every Year(525601 min</option>
+            </select>
+          </div>
+
+          <div class="d-grid">
+            <button type="submit" class="btn btn-primary"onclick="alert('REGISTRATION SUCCESSFUL')">Register Wi-Fi</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

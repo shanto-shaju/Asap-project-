@@ -1,0 +1,23 @@
+{% extends "base.html" %}
+
+{% block title %}Scan Wi-Fi{% endblock %}
+
+{% block content %}
+<div class="text-center mt-5">
+    <h1 class="text-primary mb-4">Connected Wi-Fi Network</h1>
+
+    {% if ssid %}
+        <div class="card shadow-sm d-inline-block">
+            <div class="card-body">
+                <h5 class="card-title">{{ ssid }}</h5>
+                <p class="card-text text-muted">This is your currently connected Wi-Fi network.</p>
+                <a href="{{ url_for('register') }}?ssid={{ ssid }}" class="btn btn-primary">
+                    Register This Network
+                </a>
+            </div>
+        </div>
+    {% else %}
+        <p class="text-danger">No Wi-Fi network detected. Please connect to Wi-Fi and try again.</p>
+    {% endif %}
+</div>
+{% endblock %}

@@ -1,0 +1,35 @@
+{% extends "base.html" %}
+
+{% block title %}About - Wi-Fi Manager{% endblock %}
+
+{% block content %}
+<script src="{{ url_for('static', filename='reminder.js') }}"></script>
+<div class="py-5">
+  <div class="row justify-content-center">
+    <div class="col-md-8">
+      <div class="card shadow-sm">
+        <div class="card-body">
+          <h1 class="card-title text-primary">ABOUT WI-FI MANAGER</h1>
+          <p class="card-text lead">
+            Wi-Fi Manager is a software that helps manage Wi-Fi networks.
+            It provides scanning of nearby networks, registration of Wi-Fi details,
+            and monitoring of connected devices for security and management.
+          </p>
+          <p>
+            Key features include:
+          </p>
+          <ul>
+            <li>Scan available Wi-Fi networks</li>
+            <li>Register and store Wi-Fi details securely</li>
+            <li>Monitor connected devices</li>
+            <li>Simulated security features for demonstration</li>
+          </ul>
+          <p>
+            This project is developed using Python Flask and Bootstrap for a clean, responsive user interface.
+          </p>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
