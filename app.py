@@ -176,14 +176,12 @@ def get_latency():
         return jsonify({"latency": -1})
 
 # ---------------- password changer route (handles GET and POST) ----------------
-@app.route("/password_changer", methods=["GET", "POST"])
+@app.route("/password_changer", methods=["GET"])
 def password_changer():
-
-
+    data = None
+    success = False
+    message = None
     return render_template("password_changer.html", data=data, success=success, message=message)
-
-
-# in app.py
 authorized_users = []  # temporary in-memory list
 
 @app.route("/user-list", methods=["GET", "POST"])
