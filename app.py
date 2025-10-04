@@ -37,19 +37,39 @@ def ensure_phone_column():
     conn.close()
 
 # ---------------- wifi helper ----------------
+import subprocess
+import platform
+
 def get_connected_wifi_ssid():
+    system_platform = platform.system().lower()
+    
     try:
-        result = subprocess.check_output(
-            ["netsh", "wlan", "show", "interfaces"],
-            encoding="utf-8"
-        )
-        match = re.search(r"^\s*SSID\s*:\s*(.+)$", result, re.MULTILINE)
-        if match:
-            ssid = match.group(1).strip()
-            return ssid
-        return None
-    except subprocess.CalledProcessError:
-        return None
+        if "windows" in system_platform:
+            # Works only on Windows
+            result = subprocess.check_output(
+                ["netsh", "wlan", "show", "interfaces"],
+                encoding="utf-8"
+            )
+            match = re.search(r"SSID\s*:\s*(.+)", result)
+            return match.group(1).strip() if match else "Unknown"
+        
+        elif "linux" in system_platform:
+            # Use nmcli on Linux (Render, Ubuntu, etc.)
+            result = subprocess.check_output(
+                ["nmcli", "-t", "-f", "active,ssid", "dev", "wifi"],
+                encoding="utf-8"
+            )
+            for line in result.splitlines():
+                if line.startswith("yes:"):
+                    return line.split(":", 1)[1]
+            return "Unknown"
+        
+        else:
+            return "Unsupported OS"
+    
+    except Exception as e:
+        print("Wi-Fi SSID check error:", e)
+        return "Unknown"
 
 # ---------------- routes ----------------
 @app.route("/")
