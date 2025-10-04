@@ -224,6 +224,5 @@ def help_page():
     return render_template("help.html")
 
 if __name__ == "__main__":
-    # ensure column exists at startup as well
-    ensure_phone_column()
-    app.run(debug=True)
+    port = int(os.environ.get("PORT", 5000))  # Use Render's PORT if available
+    app.run(host="0.0.0.0", port=port, debug=True)
