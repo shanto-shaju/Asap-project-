@@ -1,51 +1,38 @@
-# app.py (updated)
 from flask import Flask, render_template, request, redirect, url_for, flash, jsonify
-import atexit
+import os
 import platform
 import subprocess
 import re
-import sqlite3
 import speedtest
 import psutil
-import datetime
 import matplotlib.pyplot as plt
-import os
-from flask_sqlalchemy import SQLAlchemy
-from models import db, WiFiNetwork  # keep if you're using models elsewhere
+from models import db, WiFiNetwork  # only if you're using your models file
 
 app = Flask(__name__)
 app.secret_key = "wifi23"
 
-# --- Database file path (adjust if needed) ---
-DB_PATH = r"C:\Users\HI\Desktop\asap project\instance\database.db"
-
-# If you also use SQLAlchemy elsewhere, keep config (you had it before)
+# --- Database path ---
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///database.db'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
-# db.init_app(app)  # only if you use models/SQLAlchemy elsewhere; keep commented if causing issues
+# db.init_app(app)  # Uncomment if using SQLAlchemy models
 
-# ---------------- helper ---------------defef ensure_phone_column():
-
-
-# ---------------- wifi helper ----------------
-import subprocess
-import platform
-
+# -------------------------------------------------------------------
+# 🔹 Wi-Fi Helper Function: get connected SSID
+# -------------------------------------------------------------------
 def get_connected_wifi_ssid():
+    """Detect the currently connected Wi-Fi SSID."""
     system_platform = platform.system().lower()
-    
+
     try:
         if "windows" in system_platform:
-            # Works only on Windows
             result = subprocess.check_output(
                 ["netsh", "wlan", "show", "interfaces"],
                 encoding="utf-8"
             )
             match = re.search(r"SSID\s*:\s*(.+)", result)
             return match.group(1).strip() if match else "Unknown"
-        
+
         elif "linux" in system_platform:
-            # Use nmcli on Linux (Render, Ubuntu, etc.)
             result = subprocess.check_output(
                 ["nmcli", "-t", "-f", "active,ssid", "dev", "wifi"],
                 encoding="utf-8"
@@ -54,27 +41,25 @@ def get_connected_wifi_ssid():
                 if line.startswith("yes:"):
                     return line.split(":", 1)[1]
             return "Unknown"
-        
+
         else:
             return "Unsupported OS"
-    
     except Exception as e:
         print("Wi-Fi SSID check error:", e)
         return "Unknown"
 
-# ---------------- routes ----------------
+# -------------------------------------------------------------------
+# 🔹 ROUTES
+# -------------------------------------------------------------------
+
 @app.route("/")
 def about():
+    """Landing page."""
     return render_template("about.html")
 
-@app.route("/scan")
-def scan_wifi():
-    ssid = get_connected_wifi_ssid()
-    return render_template("scan.html", ssid=ssid)
-
+# ---------------- Register Wi-Fi ----------------
 @app.route("/register", methods=["GET", "POST"])
 def register():
-    # keep your SQLAlchemy-based registration if you use it
     if request.method == "POST":
         ssid = request.form.get("ssid")
         security = request.form.get("security")
@@ -104,30 +89,30 @@ def register():
     ssid = request.args.get("ssid", "")
     return render_template("register.html", ssid=ssid)
 
+# ---------------- MAIN DASHBOARD ----------------
 @app.route("/main")
 def main():
-    return render_template("main.html")
+    """Main dashboard page showing network info and graphs."""
     # --- Speed Test ---
     try:
         st = speedtest.Speedtest()
-        download_speed = round(st.download() / 1_000_000, 2)  # Mbps
-        upload_speed = round(st.upload() / 1_000_000, 2)  # Mbps
+        download_speed = round(st.download() / 1_000_000, 2)
+        upload_speed = round(st.upload() / 1_000_000, 2)
     except Exception:
         download_speed = 0
         upload_speed = 0
 
-    # --- Data Usage (Total bytes sent/received) ---
+    # --- Data Usage ---
     net_io = psutil.net_io_counters()
     total_used_gb = round((net_io.bytes_sent + net_io.bytes_recv) / (1024 ** 3), 2)
 
-    # --- Network Graph (simulate values) ---
+    # --- Generate Speed Graph ---
     time_stamps = [f"{i}s" for i in range(1, 6)]
     try:
         speeds = [round(st.download() / 1_000_000, 2) for _ in range(5)]
     except Exception:
         speeds = [0, 0, 0, 0, 0]
 
-    # Plot & save
     plt.figure(figsize=(4, 2))
     plt.plot(time_stamps, speeds, marker='o')
     plt.title("Network Speed Over Time")
@@ -139,15 +124,16 @@ def main():
     plt.savefig(graph_path)
     plt.close()
 
-    # pass just the filename (your template uses url_for static)
     return render_template("main.html",
                            download_speed=download_speed,
                            upload_speed=upload_speed,
                            total_used=total_used_gb,
                            graph_image=graph_filename)
 
+# ---------------- SPEED TEST ----------------
 @app.route('/speedtest')
 def run_speedtest():
+    """Run speed test when called via JS fetch()."""
     try:
         st = speedtest.Speedtest()
         download = round(st.download() / 1_000_000, 2)
@@ -156,10 +142,11 @@ def run_speedtest():
     except Exception:
         return jsonify({'download': 0, 'upload': 0})
 
+# ---------------- LATENCY CHECK ----------------
 @app.route('/get_latency')
 def get_latency():
+    """Ping Google DNS and return latency in ms."""
     try:
-        # Ping Google
         if platform.system().lower() == "windows":
             ping_output = subprocess.check_output(["ping", "8.8.8.8", "-n", "1"], encoding='utf-8')
             match = re.search(r"Average = (\d+)ms", ping_output)
@@ -167,25 +154,23 @@ def get_latency():
             ping_output = subprocess.check_output(["ping", "-c", "1", "8.8.8.8"], encoding='utf-8')
             match = re.search(r"time=(\d+\.\d+)", ping_output)
 
-        if match:
-            latency = float(match.group(1))
-        else:
-            latency = -1
+        latency = float(match.group(1)) if match else -1
         return jsonify({"latency": latency})
     except Exception:
         return jsonify({"latency": -1})
 
-# ---------------- password changer route (handles GET and POST) ----------------
-@app.route("/password_changer", methods=["GET"])
+# ---------------- PASSWORD CHANGER ----------------
+@app.route("/password_changer")
 def password_changer():
-    data = None
-    success = False
-    message = None
-    return render_template("password_changer.html", data=data, success=success, message=message)
-authorized_users = []  # temporary in-memory list
+    """Privacy popup and password changer setup."""
+    return render_template("password_changer.html", data=None, success=False, message=None)
+
+# ---------------- USER LIST ----------------
+authorized_users = []  # In-memory list (no DB use)
 
 @app.route("/user-list", methods=["GET", "POST"])
 def user_list():
+    """Add or check authorized Wi-Fi SSIDs."""
     message = None
     unauthorized = False
 
@@ -195,11 +180,8 @@ def user_list():
             authorized_users.append(ssid)
             message = f"{ssid} added to authorized list."
 
-    # get current connected SSID
     current_ssid = get_connected_wifi_ssid()
-
-
-    if not authorized_users:
+    if current_ssid not in authorized_users and authorized_users:
         unauthorized = True
 
     return render_template(
@@ -209,6 +191,7 @@ def user_list():
         message=message,
         unauthorized=unauthorized
     )
+
 @app.route("/remove-ssid", methods=["POST"])
 def remove_ssid():
     ssid_to_remove = request.form.get("ssid_to_remove")
@@ -216,13 +199,17 @@ def remove_ssid():
         authorized_users.remove(ssid_to_remove)
     return redirect("/user-list")
 
-
-
-
+# ---------------- HELP PAGE ----------------
 @app.route("/help")
 def help_page():
     return render_template("help.html")
 
+# ---------------- 404 HANDLER ----------------
+@app.errorhandler(404)
+def page_not_found(e):
+    return render_template("404.html"), 404
+
+# ---------------- MAIN ENTRY ----------------
 if __name__ == "__main__":
-    port = int(os.environ.get("PORT", 5000))  # Use Render's PORT if available
+    port = int(os.environ.get("PORT", 5000))
     app.run(host="0.0.0.0", port=port, debug=True)
