@@ -1,15 +1,11 @@
 {% extends "base.html" %}
-
 {% block title %}Main Dashboard{% endblock %}
 
 {% block content %}
-<script src="{{ url_for('static', filename='reminder.js') }}"></script>
 <div class="container-fluid mt-4">
   <!-- Header -->
-  <div class="row mb-4">
-    <div class="col text-center">
-      <h2 class="text-primary">Dashboard</h2>
-    </div>
+  <div class="row mb-4 text-center">
+    <h2 class="text-primary">Dashboard</h2>
   </div>
 
   <div class="row">
@@ -27,8 +23,7 @@
       <div class="card mb-4 shadow-sm">
         <div class="card-body">
           <h5 class="card-title">📊 Data Usage</h5>
-          <p class="card-text">{{ total_used }}1.75GB USED</p>
-          <!-- Add bar or chart here later -->
+          <p class="card-text">1.75GB USED</p>
         </div>
       </div>
 
@@ -36,116 +31,96 @@
       <div class="card mb-4 shadow-sm">
         <div class="card-body">
           <h5 class="card-title">⚡ Speed Test</h5>
-          <p class="card-text" id="download">download: 0 Mbps</p>
-          <p class="card-text" id="upload">upload: 0 Mbps</p>
-          <button class="btn btn-primary mt-2" onclick="startSpeedTest()">Start test</button>
+          <p id="download">Download: 0 Mbps</p>
+          <p id="upload">Upload: 0 Mbps</p>
+          <button class="btn btn-primary mt-2" onclick="runSpeedTest()">Start Test</button>
         </div>
       </div>
 
-     <!-- Network Graph - Real Time Latency -->
-<div class="card shadow-sm mb-4">
-  <div class="card-body">
-    <h5 class="card-title">📡 Real-Time Latency (ms)</h5>
-    <canvas id="latencyChart" height="75"></canvas>
-  </div>
-</div>
+      <!-- Network Latency -->
+      <div class="card shadow-sm mb-4">
+        <div class="card-body">
+          <h5 class="card-title">📡 Real-Time Latency (ms)</h5>
+          <canvas id="latencyChart" height="75"></canvas>
+        </div>
+      </div>
     </div>
   </div>
 </div>
+
+<!-- ======================= JavaScript Section ======================= -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
 <script>
-  function animateValue(id, endValue, duration) {
-    const element = document.getElementById(id);
-    let start = 0;
-    const increment = endValue / (duration / 20);
-    const interval = setInterval(() => {
-      start += increment;
-      if (start >= endValue) {
-        start = endValue;
-        clearInterval(interval);
-      }
-      element.innerText = id.charAt(0).toUpperCase() + id.slice(1) + ": " + start.toFixed(2) + " Mbps";
-    }, 20);
+/* ----------------- SPEED TEST ----------------- */
+async function runSpeedTest() {
+  const downloadEl = document.getElementById('download');
+  const uploadEl = document.getElementById('upload');
+  downloadEl.textContent = "Download: Testing...";
+  uploadEl.textContent = "Upload: Testing...";
+
+  try {
+    // --- Download test ---
+    const imageUrl = "https://upload.wikimedia.org/wikipedia/commons/3/3f/Fronalpstock_big.jpg"; // 2MB image
+    const startTime = performance.now();
+    const response = await fetch(imageUrl + "?cacheBust=" + Math.random());
+    const blob = await response.blob();
+    const endTime = performance.now();
+    const sizeMB = blob.size / (1024 * 1024);
+    const durationSec = (endTime - startTime) / 1000;
+    const downloadSpeed = (sizeMB / durationSec * 8).toFixed(2);
+    downloadEl.textContent = `Download: ${downloadSpeed} Mbps`;
+
+    // --- Upload test ---
+    const uploadData = new Blob([new ArrayBuffer(2 * 1024 * 1024)]); // 2MB dummy data
+    const uploadStart = performance.now();
+    await fetch("https://httpbin.org/post", { method: "POST", body: uploadData });
+    const uploadEnd = performance.now();
+    const uploadDuration = (uploadEnd - uploadStart) / 1000;
+    const uploadSpeed = (2 / uploadDuration * 8).toFixed(2);
+    uploadEl.textContent = `Upload: ${uploadSpeed} Mbps`;
+  } catch (err) {
+    downloadEl.textContent = "Download: Error";
+    uploadEl.textContent = "Upload: Error";
+  }
+}
+
+/* ----------------- LATENCY GRAPH ----------------- */
+const ctx = document.getElementById('latencyChart').getContext('2d');
+const latencyChart = new Chart(ctx, {
+  type: 'line',
+  data: { labels: [], datasets: [{ label: 'Ping (ms)', data: [], borderColor: 'rgb(75,192,192)', tension: 0.3 }] },
+  options: { animation: false, scales: { y: { beginAtZero: true, max: 500 } } }
+});
+
+async function updateLatency() {
+  const start = performance.now();
+  await fetch('/ping?' + Math.random());
+  const latency = performance.now() - start;
+
+  const timeLabel = new Date().toLocaleTimeString();
+  latencyChart.data.labels.push(timeLabel);
+  latencyChart.data.datasets[0].data.push(latency);
+
+  if (latencyChart.data.labels.length > 20) {
+    latencyChart.data.labels.shift();
+    latencyChart.data.datasets[0].data.shift();
   }
 
-  function startSpeedTest() {
-    // Show animation first with dummy increasing values
-    document.getElementById("download").innerText = "Download: Testing...";
-    document.getElementById("upload").innerText = "Upload: Testing...";
+  latencyChart.update();
+}
 
-    // Fetch real data from Flask backend after short delay
-    fetch('/speedtest')
-      .then(response => response.json())
-      .then(data => {
-        animateValue("download", data.download, 2000);
-        setTimeout(() => {
-          animateValue("upload", data.upload, 2000);
-        }, 2200);
-      })
-      .catch(err => {
-        document.getElementById("download").innerText = "Download: Error";
-        document.getElementById("upload").innerText = "Upload: Error";
-      });
-  }
-</script>
-  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-<script>
-  const ctx = document.getElementById('latencyChart').getContext('2d');
+setInterval(updateLatency, 3000);
 
-  const latencyData = {
-    labels: [],
-    datasets: [{
-      label: 'Ping (ms)',
-      data: [],
-      borderColor: 'rgb(75, 192, 192)',
-      tension: 0.4
-    }]
-  };
+/* ----------------- PRIVACY POPUP ----------------- */
+function showPrivacyPopup() {
+  const modal = new bootstrap.Modal(document.getElementById('privacyModal'));
+  modal.show();
+}
 
-  const latencyChart = new Chart(ctx, {
-    type: 'line',
-    data: latencyData,
-    options: {
-      animation: false,
-      responsive: true,
-      scales: {
-        y: {
-          beginAtZero: true,
-          max: 200
-        }
-      }
-    }
-  });
-
-  function updateLatencyGraph() {
-    fetch('/get_latency')
-      .then(response => response.json())
-      .then(data => {
-        const now = new Date().toLocaleTimeString();
-        latencyChart.data.labels.push(now);
-        latencyChart.data.datasets[0].data.push(data.latency);
-
-        // Keep only last 20 points
-        if (latencyChart.data.labels.length > 20) {
-          latencyChart.data.labels.shift();
-          latencyChart.data.datasets[0].data.shift();
-        }
-
-        latencyChart.update();
-      });
-  }
-
-  // Call every 3 seconds
-  setInterval(updateLatencyGraph, 3000);
-</script>
-<script>
-  function showPrivacyPopup() {
-    const modal = new bootstrap.Modal(document.getElementById('privacyModal'));
-    modal.show();
-  }
-
-  function redirectToPasswordChanger() {
-    window.location.href = "{{ url_for('password_changer') }}";
-  }
+function redirectToPasswordChanger() {
+  window.location.href = "{{ url_for('password_changer') }}";
+}
 </script>
 
 <!-- Privacy Policy Modal -->
@@ -158,7 +133,8 @@
       </div>
       <div class="modal-body">
         <p>
-          By enabling password changer, you allow the system to update your Wi-Fi password at defined intervals. Your data (SSID, brand, interval, and phone number) will be used to send alerts.
+          By enabling password changer, you allow the system to update your Wi-Fi password at defined intervals.
+          Your data (SSID, brand, interval, and phone number) will be used to send alerts.
         </p>
         <p>Do you agree to proceed?</p>
       </div>
@@ -169,5 +145,4 @@
     </div>
   </div>
 </div>
-
 {% endblock %}
