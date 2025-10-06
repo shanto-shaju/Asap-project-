@@ -19,7 +19,7 @@ app.secret_key = "wifi23"
 
 DB_PATH = r"C:\Users\HI\Desktop\asap project\instance\database.db"
 
-If you also use SQLAlchemy elsewhere, keep config (you had it before)
+#If you also use SQLAlchemy elsewhere, keep config (you had it before)
 
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///database.db'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
