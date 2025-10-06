@@ -15,7 +15,7 @@ from models import db, WiFiNetwork  # keep if you're using models elsewhere
 app = Flask(name)
 app.secret_key = "wifi23"
 
---- Database file path (adjust if needed) ---
+#--- Database file path (adjust if needed) ---
 
 DB_PATH = r"C:\Users\HI\Desktop\asap project\instance\database.db"
 
@@ -26,9 +26,9 @@ app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
 db.init_app(app)  # only if you use models/SQLAlchemy elsewhere; keep commented if causing issues
 
----------------- helper ---------------defef ensure_phone_column():
+#---------------- helper ---------------defef ensure_phone_column():
 
----------------- wifi helper ----------------
+#---------------- wifi helper ----------------
 
 import subprocess
 import platform
@@ -64,7 +64,7 @@ except Exception as e:
     print("Wi-Fi SSID check error:", e)  
     return "Unknown"
 
----------------- routes ----------------
+#---------------- routes ----------------
 
 @app.route("/")
 def about():
@@ -178,7 +178,7 @@ if match:
 except Exception:  
     return jsonify({"latency": -1})
 
----------------- password changer route (handles GET and POST) ----------------
+#---------------- password changer route (handles GET and POST) ----------------
 
 @app.route("/password_changer", methods=["GET"])
 def password_changer():
