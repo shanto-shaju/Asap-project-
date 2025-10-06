@@ -34,31 +34,35 @@ import subprocess
 import platform
 
 def get_connected_wifi_ssid():
-system_platform = platform.system().lower()
+    system_platform = platform.system().lower()
 
-try:  
-    if "windows" in system_platform:  
-        # Works only on Windows  
-        result = subprocess.check_output(  
-            ["netsh", "wlan", "show", "interfaces"],  
-            encoding="utf-8"  
-        )  
-        match = re.search(r"SSID\s*:\s*(.+)", result)  
-        return match.group(1).strip() if match else "Unknown"  
-      
-    elif "linux" in system_platform:  
-        # Use nmcli on Linux (Render, Ubuntu, etc.)  
-        result = subprocess.check_output(  
-            ["nmcli", "-t", "-f", "active,ssid", "dev", "wifi"],  
-            encoding="utf-8"  
-        )  
-        for line in result.splitlines():  
-            if line.startswith("yes:"):  
-                return line.split(":", 1)[1]  
+    try:
+        if "windows" in system_platform:
+            # Works only on Windows
+            result = subprocess.check_output(
+                ["netsh", "wlan", "show", "interfaces"],
+                encoding="utf-8"
+            )
+            match = re.search(r"SSID\s*:\s*(.+)", result)
+            return match.group(1).strip() if match else "Unknown"
+
+        elif "linux" in system_platform:
+            # Use nmcli on Linux (Render, Ubuntu, etc.)
+            result = subprocess.check_output(
+                ["nmcli", "-t", "-f", "active,ssid", "dev", "wifi"],
+                encoding="utf-8"
+            )
+            for line in result.splitlines():
+                if line.startswith("yes:"):
+                    return line.split(":", 1)[1]
+            return "Unknown"
+
+        else:
+            return "Unsupported OS"
+
+    except Exception as e:
+        print("Wi-Fi SSID check error:", e)
         return "Unknown"  
-      
-    else:  
-        return "Unsupported OS"  
   
 except Exception as e:  
     print("Wi-Fi SSID check error:", e)  
