@@ -91,6 +91,7 @@ def register():
 
 @app.route("/main")
 def main():
+    return render_template("main.html")
     try:
         st = speedtest.Speedtest()
         download_speed = round(st.download() / 1_000_000, 2)
