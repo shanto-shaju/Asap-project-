@@ -188,6 +188,11 @@ def remove_ssid():
 @app.route("/help")
 def help_page():
     return render_template("help.html")
+@app.route('/get_data_usage')
+def get_data_usage():
+    net_io = psutil.net_io_counters()
+    total_used_gb = round((net_io.bytes_sent + net_io.bytes_recv) / (1024 ** 3), 2)
+    return jsonify({'total_used': total_used_gb})
 
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 5000))
