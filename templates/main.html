@@ -84,7 +84,6 @@ async function runSpeedTest() {
 }
 
 /* ----------------- AUTO REFRESH DATA USAGE ----------------- */
-<script>
 function refreshDataUsage() {
   fetch("/get_data_usage")
     .then(res => res.json())
@@ -99,7 +98,6 @@ refreshDataUsage();
 
 // Then refresh every 5 seconds
 setInterval(refreshDataUsage, 5000);
-      </script>
 
 /* ----------------- LATENCY GRAPH ----------------- */
 const ctx = document.getElementById('latencyChart').getContext('2d');
