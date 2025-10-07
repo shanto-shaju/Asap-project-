@@ -23,7 +23,7 @@
       <div class="card mb-4 shadow-sm">
         <div class="card-body">
           <h5 class="card-title">📊 Data Usage</h5>
-          <p class="card-text" id="dataUsage">{{ total_used }} GB USED</p>
+          <p class="card-text" id="dataUsage">Loading...</p>
         </div>
       </div>
 
@@ -84,6 +84,7 @@ async function runSpeedTest() {
 }
 
 /* ----------------- AUTO REFRESH DATA USAGE ----------------- */
+<script>
 function refreshDataUsage() {
   fetch("/get_data_usage")
     .then(res => res.json())
@@ -92,8 +93,13 @@ function refreshDataUsage() {
     })
     .catch(() => console.log("Data usage update failed"));
 }
-// refresh every 5 seconds
+
+// Run immediately when the page loads
+refreshDataUsage();
+
+// Then refresh every 5 seconds
 setInterval(refreshDataUsage, 5000);
+      </script>
 
 /* ----------------- LATENCY GRAPH ----------------- */
 const ctx = document.getElementById('latencyChart').getContext('2d');
