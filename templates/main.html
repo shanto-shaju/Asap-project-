@@ -23,7 +23,7 @@
       <div class="card mb-4 shadow-sm">
         <div class="card-body">
           <h5 class="card-title">📊 Data Usage</h5>
-          <p class="card-text">{{ total_used }} USED</p>
+          <p class="card-text" id="dataUsage">{{ total_used }} GB USED</p>
         </div>
       </div>
 
@@ -60,8 +60,7 @@ async function runSpeedTest() {
   uploadEl.textContent = "Upload: Testing...";
 
   try {
-    // --- Download test ---
-    const imageUrl = "https://upload.wikimedia.org/wikipedia/commons/3/3f/Fronalpstock_big.jpg"; // 2MB image
+    const imageUrl = "https://upload.wikimedia.org/wikipedia/commons/3/3f/Fronalpstock_big.jpg";
     const startTime = performance.now();
     const response = await fetch(imageUrl + "?cacheBust=" + Math.random());
     const blob = await response.blob();
@@ -71,8 +70,7 @@ async function runSpeedTest() {
     const downloadSpeed = (sizeMB / durationSec * 8).toFixed(2);
     downloadEl.textContent = `Download: ${downloadSpeed} Mbps`;
 
-    // --- Upload test ---
-    const uploadData = new Blob([new ArrayBuffer(2 * 1024 * 1024)]); // 2MB dummy data
+    const uploadData = new Blob([new ArrayBuffer(2 * 1024 * 1024)]);
     const uploadStart = performance.now();
     await fetch("https://httpbin.org/post", { method: "POST", body: uploadData });
     const uploadEnd = performance.now();
@@ -84,6 +82,18 @@ async function runSpeedTest() {
     uploadEl.textContent = "Upload: Error";
   }
 }
+
+/* ----------------- AUTO REFRESH DATA USAGE ----------------- */
+function refreshDataUsage() {
+  fetch("/get_data_usage")
+    .then(res => res.json())
+    .then(data => {
+      document.getElementById("dataUsage").textContent = `${data.total_used} GB USED`;
+    })
+    .catch(() => console.log("Data usage update failed"));
+}
+// refresh every 5 seconds
+setInterval(refreshDataUsage, 5000);
 
 /* ----------------- LATENCY GRAPH ----------------- */
 const ctx = document.getElementById('latencyChart').getContext('2d');
@@ -109,7 +119,6 @@ async function updateLatency() {
 
   latencyChart.update();
 }
-
 setInterval(updateLatency, 3000);
 
 /* ----------------- PRIVACY POPUP ----------------- */
@@ -117,7 +126,6 @@ function showPrivacyPopup() {
   const modal = new bootstrap.Modal(document.getElementById('privacyModal'));
   modal.show();
 }
-
 function redirectToPasswordChanger() {
   window.location.href = "{{ url_for('password_changer') }}";
 }
