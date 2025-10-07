@@ -189,6 +189,7 @@ def remove_ssid():
 def help_page():
     return render_template("help.html")
 @app.route('/get_data_usage')
+@app.route("/get_data_usage")
 def get_data_usage():
     net_io = psutil.net_io_counters()
     total_used_gb = round((net_io.bytes_sent + net_io.bytes_recv) / (1024 ** 3), 2)
