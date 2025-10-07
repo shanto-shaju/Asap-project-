@@ -91,7 +91,6 @@ def register():
 
 @app.route("/main")
 def main():
-    return render_template("main.html")
     try:
         st = speedtest.Speedtest()
         download_speed = round(st.download() / 1_000_000, 2)
@@ -99,7 +98,7 @@ def main():
     except Exception:
         download_speed = 0
         upload_speed = 0
-
+    return render_template("main.html")
     net_io = psutil.net_io_counters()
     total_used_gb = round((net_io.bytes_sent + net_io.bytes_recv) / (1024 ** 3), 2)
 
