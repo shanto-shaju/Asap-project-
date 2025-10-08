@@ -60,6 +60,7 @@ async function runSpeedTest() {
   uploadEl.textContent = "Upload: Testing...";
 
   try {
+    // --- Download test ---
     const imageUrl = "https://upload.wikimedia.org/wikipedia/commons/3/3f/Fronalpstock_big.jpg";
     const startTime = performance.now();
     const response = await fetch(imageUrl + "?cacheBust=" + Math.random());
@@ -70,13 +71,15 @@ async function runSpeedTest() {
     const downloadSpeed = (sizeMB / durationSec * 8).toFixed(2);
     downloadEl.textContent = `Download: ${downloadSpeed} Mbps`;
 
-    const uploadData = new Blob([new ArrayBuffer(2 * 1024 * 1024)]);
+    // --- Upload test (to your Flask app) ---
+    const uploadData = new Uint8Array(5 * 1024 * 1024); // 5MB dummy data
     const uploadStart = performance.now();
-    await fetch("https://httpbin.org/post", { method: "POST", body: uploadData });
+    await fetch("/upload_test", { method: "POST", body: uploadData });
     const uploadEnd = performance.now();
     const uploadDuration = (uploadEnd - uploadStart) / 1000;
-    const uploadSpeed = (2 / uploadDuration * 8).toFixed(2);
+    const uploadSpeed = (5 / uploadDuration * 8).toFixed(2);
     uploadEl.textContent = `Upload: ${uploadSpeed} Mbps`;
+
   } catch (err) {
     downloadEl.textContent = "Download: Error";
     uploadEl.textContent = "Upload: Error";
