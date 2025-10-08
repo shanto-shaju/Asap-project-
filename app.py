@@ -123,15 +123,10 @@ def main():
                            total_used=total_used_gb,
                            graph_image=graph_filename)
 
-@app.route('/speedtest')
-def run_speedtest():
-    try:
-        st = speedtest.Speedtest()
-        download = round(st.download() / 1_000_000, 2)
-        upload = round(st.upload() / 1_000_000, 2)
-        return jsonify({'download': download, 'upload': upload})
-    except Exception:
-        return jsonify({'download': 0, 'upload': 0})
+@app.route("/upload_test", methods=["POST"])
+def upload_test():
+    size_mb = len(request.data) / (1024 * 1024)
+    return jsonify({"received_mb": size_mb})
 
 @app.route('/get_latency')
 def get_latency():
